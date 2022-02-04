@@ -27,6 +27,8 @@ from cyclical_learning_rate import CyclicLR
 from models import *
 from utils import *
 from loss import custom_loss
+from loss_MSE import custom_loss_MSE
+from loss_dev import custom_loss_dev
 from DataGenerator import DataGenerator
 
 
@@ -277,7 +279,7 @@ def train_loadAllData(args):
     elif t_mode == 1:
         optimizer = optimizers.Adam(lr=1., clipnorm=1.)
         keras_model.compile(loss=custom_loss, optimizer=optimizer,
-                            metrics=['mean_absolute_error', 'mean_squared_error'])
+                            metrics=['mean_absolute_error', 'mean_squared_error', custom_loss_MSE, custom_loss_dev])
         verbose = 1
 
     # Run training
