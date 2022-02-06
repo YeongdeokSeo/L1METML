@@ -17,17 +17,15 @@ def custom_loss_MSE(y_true, y_pred):
     #py_truth1 = py_truth / pt_truth
 
     # using absolute response
-    pt_cut = pt_truth > 0.
-    pt_truth_filtered = tf.boolean_mask(pt_truth, pt_cut)
 
-    filter_bin_low = pt_truth_filtered > 50.
+    filter_bin_low = pt_truth > 50.
 
     # exclude low-MET region events
     px_pred = tf.boolean_mask(px_pred, filter_bin_low)
-    py_pred = tf.boolean_mask(px_pred, filter_bin_low)
-    px_truth = tf.boolean_mask(px_pred, filter_bin_low)
-    py_truth = tf.boolean_mask(px_pred, filter_bin_low)
-    pt_truth = tf.boolean_mask(px_pred, filter_bin_low)
+    py_pred = tf.boolean_mask(py_pred, filter_bin_low)
+    px_truth = tf.boolean_mask(px_truth, filter_bin_low)
+    py_truth = tf.boolean_mask(py_truth, filter_bin_low)
+    pt_truth = tf.boolean_mask(pt_truth, filter_bin_low)
 
     #loss = K.mean(((px_pred - px_truth)**2 + (py_pred - py_truth)**2)/(pt_truth**2))
     loss = K.mean((K.sqrt(tf.maximum((px_pred - px_truth)**2 + (py_pred - py_truth)**2, 1e-9))/pt_truth))
