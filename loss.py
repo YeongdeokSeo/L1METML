@@ -27,8 +27,8 @@ def custom_loss_MSE(y_true, y_pred):
     py_truth = tf.boolean_mask(py_truth, filter_bin_low)
     pt_truth = tf.boolean_mask(pt_truth, filter_bin_low)
 
-    #loss = K.mean(((px_pred - px_truth)**2 + (py_pred - py_truth)**2)/(pt_truth**2))
-    loss = K.mean((K.sqrt(tf.maximum((px_pred - px_truth)**2 + (py_pred - py_truth)**2, 1e-9))/pt_truth))
+    loss = K.mean(((px_pred - px_truth)**2 + (py_pred - py_truth)**2))
+    #loss = K.mean((K.sqrt(tf.maximum((px_pred - px_truth)**2 + (py_pred - py_truth)**2, 1e-9))/pt_truth))
 
     return loss
 
@@ -83,9 +83,10 @@ def custom_loss_dev(y_true, y_pred):
     dev += tf.abs(tf.reduce_sum(upar_pred_pos_bin4) + tf.reduce_sum(upar_pred_neg_bin4))
     #dev += tf.abs(tf.reduce_sum(upar_pred_pos_bin5) + tf.reduce_sum(upar_pred_neg_bin5))
     dev /= norm
+    dev = dev ** 2
 
 
-    return dev
+    return 5 * dev
 
 
 def custom_loss(y_true, y_pred):
@@ -99,4 +100,4 @@ def custom_loss(y_true, y_pred):
     MSE = custom_loss_MSE(y_true, y_pred)
     dev = custom_loss_dev(y_true, y_pred)
 
-    return MSE + 5 * dev
+    return MSE + dev
