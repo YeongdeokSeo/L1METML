@@ -1,5 +1,6 @@
 import awkward as ak
 import numpy as np
+import math
 
 
 def read_input(inputfiles):
@@ -24,6 +25,12 @@ def convertXY2PtPhi(arrayXY):
     arrayPtPhi[:, 0] = np.sqrt((arrayXY[:, 0]**2 + arrayXY[:, 1]**2))
     arrayPtPhi[:, 1] = np.sign(arrayXY[:, 1])*np.arccos(arrayXY[:, 0]/arrayPtPhi[:, 0])
     return arrayPtPhi
+
+def deltaPhi(truePhi, predPhi):
+    delta = truePhi - predPhi
+    delta = np.where(delta > math.pi, delta - 2*math.pi, delta)
+    delta = np.where(delta < -math.pi, delta + 2*math.pi, delta)
+    return delta
 
 
 def preProcessing(A, normFac, EVT=None):
@@ -116,7 +123,7 @@ def MakePlots(trueXY, mlXY, puppiXY, path_out):
                                            statistic=resolqt, bins=binnings, range=(0, 400))
     bin_resolPt_ml, _, _ = binned_statistic(true_ptPhi[:, 0], true_ptPhi[:, 0] - ml_ptPhi[:, 0] * responseCorrection_ml,
                                             statistic=resolqt, bins=binnings, range=(0, 400))
-    bin_resolPhi_ml, bin_edgesPhi, binnumberPhi = binned_statistic(true_ptPhi[:, 1], true_ptPhi[:, 1] - ml_ptPhi[:, 1],
+    bin_resolPhi_ml, bin_edgesPhi, binnumberPhi = binned_statistic(true_ptPhi[:, 1], deltaPhi(true_ptPhi[:, 1], ml_ptPhi[:, 1]),
                                                                    statistic=resolqt, bins=phiBinnings, range=(-3.15, 3.15))
 
     bin_resolX_puppi, _, _ = binned_statistic(true_ptPhi[:, 0], trueXY[:, 0] - puppiXY[:, 0] * responseCorrection_puppi,
@@ -125,7 +132,7 @@ def MakePlots(trueXY, mlXY, puppiXY, path_out):
                                               statistic=resolqt, bins=binnings, range=(0, 400))
     bin_resolPt_puppi, _, _ = binned_statistic(true_ptPhi[:, 0], true_ptPhi[:, 0] - puppi_ptPhi[:, 0] * responseCorrection_puppi,
                                                statistic=resolqt, bins=binnings, range=(0, 400))
-    bin_resolPhi_puppi, _, _ = binned_statistic(true_ptPhi[:, 1], true_ptPhi[:, 1] - puppi_ptPhi[:, 1],
+    bin_resolPhi_puppi, _, _ = binned_statistic(true_ptPhi[:, 1], deltaPhi(true_ptPhi[:, 1], puppi_ptPhi[:, 1]),
                                                 statistic=resolqt, bins=phiBinnings, range=(-3.15, 3.15))
 
     # calclate the resolution "magnitude" inside all 20 bins
