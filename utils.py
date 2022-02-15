@@ -42,13 +42,15 @@ def preProcessing(A, normFac, EVT=None):
     pxSum = np.sum(A[:,:,1:2], axis=1)/norm
     pySum = np.sum(A[:,:,2:3], axis=1)/norm
     uEta = np.sum(A[:,:,3:4], axis=1)
-    uPhi = np.sum(A[:,:,4:5], axis=1)
-
-    HT[np.where(np.abs(HT >500))] = 0.
-    pxSum[np.where(np.abs(pxSum >500))] = 0.
-    pySum[np.where(np.abs(pySum >500))] = 0.
 
     MET = np.sqrt(pxSum **2 + pySum **2)
+    MET[np.where(np.abs(MET == 0.))] = 1e-7
+    uPhi = np.sign(pySum) * np.arccos(pxSum/MET)
+
+    HT[np.where(np.abs(HT >500.))] = 0.
+    MET[np.where(np.abs(MET >500.))] = 0.
+    pxSum[np.where(np.abs(pxSum >500.))] = 0.
+    pySum[np.where(np.abs(pySum >500.))] = 0.
 
     inputs = np.concatenate((HT, pxSum, pySum, uEta, uPhi, MET), axis=1)
     pxpy = np.concatenate((pxSum, pySum), axis=1)

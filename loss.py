@@ -83,10 +83,10 @@ def custom_loss_dev(y_true, y_pred):
     dev += tf.abs(tf.reduce_sum(upar_pred_pos_bin4) + tf.reduce_sum(upar_pred_neg_bin4))
     #dev += tf.abs(tf.reduce_sum(upar_pred_pos_bin5) + tf.reduce_sum(upar_pred_neg_bin5))
     dev /= norm
-    dev = dev **2
+    dev = dev 
 
 
-    return 20000 * dev
+    return 5000 * dev
 
 
 def custom_loss(y_true, y_pred):
