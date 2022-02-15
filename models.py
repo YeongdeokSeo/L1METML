@@ -68,7 +68,6 @@ def dense_embedding(n_features=6,
 
 
 def dense_embedding_quantized(n_features=6,
-                              emb_out_dim=2,
                               with_bias=True,
                               t_mode=0,
                               logit_total_bits=7,
@@ -98,8 +97,6 @@ def dense_embedding_quantized(n_features=6,
         x = QActivation(activation=activation_quantizer)(x)
 
     if t_mode == 0:
-        x = qkeras.qpooling.QGlobalAveragePooling1D(name='pool', quantizer=logit_quantizer)(x)
-        # pool size?
         outputs = QDense(2, name='output', bias_quantizer=logit_quantizer, kernel_quantizer=logit_quantizer, activation='linear')(x)
 
     if t_mode == 1:
@@ -111,8 +108,6 @@ def dense_embedding_quantized(n_features=6,
         w = QActivation(activation='linear')(w)
         w = BatchNormalization(trainable=False, name='met_weight_minus_one', epsilon=False)(w)
         x = Multiply()([w, pxpy])
-
-        x = GlobalAveragePooling1D(name='output')(x)
     outputs = x
 
     keras_model = Model(inputs=inputs, outputs=outputs)

@@ -86,7 +86,7 @@ def custom_loss_dev(y_true, y_pred):
     dev = dev **2
 
 
-    return 3000 * dev
+    return 20000 * dev
 
 
 def custom_loss(y_true, y_pred):

@@ -31,11 +31,11 @@ def preProcessing(A, normFac, EVT=None):
 
     norm = normFac
 
-    HT = np.sum(A[:,:,0], axis=1)/norm
-    pxSum = np.sum(A[:,:,1], axis=1)/norm
-    pySum = np.sum(A[:,:,2], axis=1)/norm
-    uEta = np.sum(A[:,:,3], axis=1)
-    uPhi = np.sum(A[:,:,4], axis=1)
+    HT = np.sum(A[:,:,0:1], axis=1)/norm
+    pxSum = np.sum(A[:,:,1:2], axis=1)/norm
+    pySum = np.sum(A[:,:,2:3], axis=1)/norm
+    uEta = np.sum(A[:,:,3:4], axis=1)
+    uPhi = np.sum(A[:,:,4:5], axis=1)
 
     HT[np.where(np.abs(HT >500))] = 0.
     pxSum[np.where(np.abs(pxSum >500))] = 0.

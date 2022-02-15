@@ -212,7 +212,7 @@ def train_loadAllData(args):
 
     # Prepare training/val data
     Yr = Y
-    Xr = Xi + pxpy
+    Xr = [Xi, pxpy]
 
     indices = np.array([i for i in range(len(Yr))])
     indices_train, indices_test = train_test_split(indices, test_size=1./7., random_state=7)
@@ -229,7 +229,6 @@ def train_loadAllData(args):
     # Load training model
     if quantized is None:
         keras_model = dense_embedding(n_features=n_features_pf,
-                                      emb_out_dim=2,
                                       activation='tanh',
                                       t_mode=t_mode,
                                       with_bias=False,
@@ -241,7 +240,6 @@ def train_loadAllData(args):
         activation_int_bits = int(quantized[1])
 
         keras_model = dense_embedding_quantized(n_features=n_features_pf,
-                                                emb_out_dim=2,
                                                 activation_quantizer='quantized_relu',
                                                 t_mode=t_mode,
                                                 with_bias=False,
@@ -281,7 +279,8 @@ def train_loadAllData(args):
 
     keras_model.load_weights(path_out+"model.h5")
     predict_test = keras_model.predict(Xr_test) * normFac
-    PUPPI_pt = normFac * np.sum(Xr_test[1], axis=1)
+    #PUPPI_pt = normFac * np.sum(Xr_test[1], axis=1)
+    PUPPI_pt = normFac * Xr_test[1] 
     Yr_test = normFac * Yr_test
 
     test(Yr_test, predict_test, PUPPI_pt, path_out)
