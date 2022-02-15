@@ -31,25 +31,22 @@ def preProcessing(A, normFac, EVT=None):
 
     norm = normFac
 
-    pt = A[:, :, 0:1] / norm
-    px = A[:, :, 1:2] / norm
-    py = A[:, :, 2:3] / norm
-    eta = A[:, :, 3:4]
-    phi = A[:, :, 4:5]
-    puppi = A[:, :, 5:6]
+    HT = np.sum(A[:,:,0], axis=1)/norm
+    pxSum = np.sum(A[:,:,1], axis=1)/norm
+    pySum = np.sum(A[:,:,2], axis=1)/norm
+    uEta = np.sum(A[:,:,3], axis=1)
+    uPhi = np.sum(A[:,:,4], axis=1)
 
-    # remove outliers
-    pt[np.where(np.abs(pt > 500))] = 0.
-    px[np.where(np.abs(px > 500))] = 0.
-    py[np.where(np.abs(py > 500))] = 0.
+    HT[np.where(np.abs(HT >500))] = 0.
+    pxSum[np.where(np.abs(pxSum >500))] = 0.
+    pySum[np.where(np.abs(pySum >500))] = 0.
 
-    inputs = np.concatenate((pt, eta, phi, puppi), axis=2)
-    pxpy = np.concatenate((px, py), axis=2)
+    MET = np.sqrt(pxSum **2 + pySum **2)
 
-    inputs_cat0 = A[:, :, 6:7]  # encoded PF pdgId
-    inputs_cat1 = A[:, :, 7:8]  # encoded PF charge
+    inputs = np.concatenate((HT, pxSum, pySum, uEta, uPhi, MET), axis=1)
+    pxpy = np.concatenate((pxSum, pySum), axis=1)
 
-    return inputs, pxpy, inputs_cat0, inputs_cat1
+    return inputs, pxpy
 
 
 def MakePlots(trueXY, mlXY, puppiXY, path_out):

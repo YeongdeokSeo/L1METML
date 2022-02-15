@@ -68,9 +68,6 @@ def dense_embedding(n_features=6,
 
 
 def dense_embedding_quantized(n_features=6,
-                              n_features_cat=2,
-                              number_of_pupcandis=100,
-                              embedding_input_dim={0: 13, 1: 3},
                               emb_out_dim=2,
                               with_bias=True,
                               t_mode=0,
@@ -88,25 +85,12 @@ def dense_embedding_quantized(n_features=6,
     logit_quantizer = getattr(qkeras.quantizers, logit_quantizer)(logit_total_bits, logit_int_bits, alpha=alpha, use_stochastic_rounding=use_stochastic_rounding)
     activation_quantizer = getattr(qkeras.quantizers, activation_quantizer)(activation_total_bits, activation_int_bits)
 
-    inputs_cont = Input(shape=(number_of_pupcandis, n_features-2), name='input')
-    pxpy = Input(shape=(number_of_pupcandis, 2), name='input_pxpy')
+    inputs_cont = Input(shape=n_features, name='input')
+    pxpy = Input(shape=2, name='input_pxpy')
 
-    embeddings = []
     inputs = [inputs_cont, pxpy]
-    for i_emb in range(n_features_cat):
-        input_cat = Input(shape=(number_of_pupcandis, 1), name='input_cat{}'.format(i_emb))
-        inputs.append(input_cat)
-        embedding = Embedding(
-            input_dim=embedding_input_dim[i_emb],
-            output_dim=emb_out_dim,
-            embeddings_initializer=initializers.RandomNormal(
-                mean=0,
-                stddev=0.4/emb_out_dim),
-            name='embedding{}'.format(i_emb))(input_cat)
-        embedding = Reshape((number_of_pupcandis, emb_out_dim))(embedding)
-        embeddings.append(embedding)
 
-    x = Concatenate()([inputs_cont] + [emb for emb in embeddings])
+    x = inputs_cont
 
     for i_dense in range(n_dense_layers):
         x = QDense(units[i_dense], kernel_quantizer=logit_quantizer, bias_quantizer=logit_quantizer, kernel_initializer='lecun_uniform')(x)

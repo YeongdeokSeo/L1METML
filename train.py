@@ -77,9 +77,7 @@ def test(Yr_test, predict_test, PUPPI_pt, path_out):
 
 def train_dataGenerator(args):
     # general setup
-    maxNPF = 100
     n_features_pf = 6
-    n_features_pf_cat = 2
     normFac = 1.
     epochs = args.epochs
     batch_size = 1024
@@ -186,9 +184,7 @@ def train_dataGenerator(args):
 
 def train_loadAllData(args):
     # general setup
-    maxNPF = 100
     n_features_pf = 6
-    n_features_pf_cat = 2
     normFac = 1.
     epochs = args.epochs
     batch_size = 1024
@@ -214,16 +210,11 @@ def train_loadAllData(args):
     Xorg, Y = read_input(h5files)
     Y = Y / -normFac
 
-    Xi, Xp, Xc1, Xc2 = preProcessing(Xorg, normFac)
-    Xc = [Xc1, Xc2]
-
-    emb_input_dim = {
-        i: int(np.max(Xc[i][0:1000])) + 1 for i in range(n_features_pf_cat)
-    }
+    Xi, pxpy = preProcessing(Xorg, normFac)
 
     # Prepare training/val data
     Yr = Y
-    Xr = [Xi, Xp] + Xc
+    Xr = Xi + pxpy
 
     indices = np.array([i for i in range(len(Yr))])
     indices_train, indices_test = train_test_split(indices, test_size=1./7., random_state=7)
@@ -241,10 +232,7 @@ def train_loadAllData(args):
     if quantized is None:
         keras_model = dense_embedding(n_features=n_features_pf,
                                       emb_out_dim=2,
-                                      n_features_cat=n_features_pf_cat,
                                       activation='tanh',
-                                      embedding_input_dim=emb_input_dim,
-                                      number_of_pupcandis=maxNPF,
                                       t_mode=t_mode,
                                       with_bias=False,
                                       units=units)
@@ -256,10 +244,7 @@ def train_loadAllData(args):
 
         keras_model = dense_embedding_quantized(n_features=n_features_pf,
                                                 emb_out_dim=2,
-                                                n_features_cat=n_features_pf_cat,
                                                 activation_quantizer='quantized_relu',
-                                                embedding_input_dim=emb_input_dim,
-                                                number_of_pupcandis=maxNPF,
                                                 t_mode=t_mode,
                                                 with_bias=False,
 
@@ -296,6 +281,7 @@ def train_loadAllData(args):
 
     end_time = time.time()  # check end time
 
+    keras_model.load_weights(path_out+"model.h5")
     predict_test = keras_model.predict(Xr_test) * normFac
     PUPPI_pt = normFac * np.sum(Xr_test[1], axis=1)
     Yr_test = normFac * Yr_test
@@ -308,6 +294,11 @@ def train_loadAllData(args):
     fi.write("Working Time (m) : {}".format((end_time - start_time)/60.))
 
     fi.close()
+
+    diff_phi = predict_test[:,1] - Yr_test[:,1]
+    diff_phi = np.where(abs(diff_phi) > 2.0, 1, 0)
+    unique, counts = np.unique(diff_phi, return_counts=True)
+    print(dict(zip(unique, counts)))
 
 
 def main():
