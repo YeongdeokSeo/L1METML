@@ -609,9 +609,9 @@ def MET_binned_predict_mean_opaque(predict_met, predict_met2, gen_met, binning, 
         y_error2[j] = np.std(predict_met2[mask2])
 
     plt.errorbar(X_genMET2, y_predict2, xerr=X_error2, yerr=y_error2,
-                 label='PUPPI MET', color='green', uplims=y_error2, lolims=y_error2)
+                 label='PUPPI MET', color='green')
     plt.errorbar(X_genMET, y_predict, xerr=X_error, yerr=y_error,
-                 label='Predicted MET', color='red', uplims=y_error, lolims=y_error)
+                 label='Predicted MET', color='red')
 
     # x = y plot
     X = np.arange(mini, maxi, binning)
