@@ -26,9 +26,7 @@ from Write_MET_binned_histogram import *
 from cyclical_learning_rate import CyclicLR
 from models import *
 from utils import *
-from loss import custom_loss
-from loss_MSE import custom_loss_MSE
-from loss_dev import custom_loss_dev
+from loss import *
 from DataGenerator import DataGenerator
 
 
