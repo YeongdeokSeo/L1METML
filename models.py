@@ -69,7 +69,6 @@ def dense_embedding(n_features=6,
 
 def dense_embedding_quantized(n_features=6,
                               with_bias=True,
-                              t_mode=0,
                               logit_total_bits=7,
                               logit_int_bits=2,
                               activation_total_bits=7,
@@ -85,9 +84,8 @@ def dense_embedding_quantized(n_features=6,
     activation_quantizer = getattr(qkeras.quantizers, activation_quantizer)(activation_total_bits, activation_int_bits)
 
     inputs_cont = Input(shape=n_features, name='input')
-    pxpy = Input(shape=2, name='input_pxpy')
 
-    inputs = [inputs_cont, pxpy]
+    inputs = inputs_cont
 
     x = inputs_cont
 
@@ -96,23 +94,11 @@ def dense_embedding_quantized(n_features=6,
         x = BatchNormalization(momentum=0.95)(x)
         x = QActivation(activation=activation_quantizer)(x)
 
-    if t_mode == 0:
-        outputs = QDense(2, name='output', bias_quantizer=logit_quantizer, kernel_quantizer=logit_quantizer, activation='linear')(x)
-
-    if t_mode == 1:
-        if with_bias:
-            b = QDense(2, name='met_bias', kernel_quantizer=logit_quantizer, bias_quantizer=logit_quantizer, kernel_initializer=initializers.VarianceScaling(scale=0.02))(x)
-            b = QActivation(activation='linear')(b)
-            pxpy = Add()([pxpy, b])
-        w = QDense(1, name='met_weight', kernel_quantizer=logit_quantizer, bias_quantizer=logit_quantizer, kernel_initializer=initializers.VarianceScaling(scale=0.02))(x)
-        w = QActivation(activation='linear')(w)
-        w = BatchNormalization(trainable=False, name='met_weight_minus_one', epsilon=False)(w)
-        x = Multiply()([w, pxpy])
-    outputs = x
+    outputs = QDense(2, name='output', bias_quantizer=logit_quantizer, kernel_quantizer=logit_quantizer, activation='linear')(x)
 
     keras_model = Model(inputs=inputs, outputs=outputs)
 
-    keras_model.get_layer('met_weight_minus_one').set_weights([np.array([1.]), np.array([-1.]), np.array([0.]), np.array([1.])])
+    #keras_model.get_layer('met_weight_minus_one').set_weights([np.array([1.]), np.array([-1.]), np.array([0.]), np.array([1.])])
 
     return keras_model
 

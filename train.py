@@ -59,8 +59,8 @@ def test(Yr_test, predict_test, PUPPI_pt, path_out):
 
     MakePlots(Yr_test, predict_test, PUPPI_pt, path_out=path_out)
 
-    Yr_test = convertXY2PtPhi(Yr_test)
-    predict_test = convertXY2PtPhi(predict_test)
+    #Yr_test = convertXY2PtPhi(Yr_test)
+    #predict_test = convertXY2PtPhi(predict_test)
     PUPPI_pt = convertXY2PtPhi(PUPPI_pt)
 
     extract_result(predict_test, Yr_test, path_out, 'TTbar', 'ML')
@@ -207,21 +207,23 @@ def train_loadAllData(args):
 
     Xorg, Y = read_input(h5files)
     Y = Y / -normFac
+    Y = convertXY2PtPhi(Y)
 
     Xi, pxpy = preProcessing(Xorg, normFac)
 
     # Prepare training/val data
     Yr = Y
-    Xr = [Xi, pxpy]
+    Xr = Xi
 
     indices = np.array([i for i in range(len(Yr))])
     indices_train, indices_test = train_test_split(indices, test_size=1./7., random_state=7)
     indices_train, indices_valid = train_test_split(indices_train, test_size=1./6., random_state=7)
     # roughly the same split as the data generator workflow (train:valid:test=5:1:1)
 
-    Xr_train = [x[indices_train] for x in Xr]
-    Xr_test = [x[indices_test] for x in Xr]
-    Xr_valid = [x[indices_valid] for x in Xr]
+    Xr_train = Xr[indices_train]
+    Xr_test = Xr[indices_test]
+    Xr_valid = Xr[indices_valid]
+    pxpy_test = pxpy[indices_test]
     Yr_train = Yr[indices_train]
     Yr_test = Yr[indices_test]
     Yr_valid = Yr[indices_valid]
@@ -230,7 +232,6 @@ def train_loadAllData(args):
     if quantized is None:
         keras_model = dense_embedding(n_features=n_features_pf,
                                       activation='tanh',
-                                      t_mode=t_mode,
                                       with_bias=False,
                                       units=units)
     else:
@@ -241,9 +242,7 @@ def train_loadAllData(args):
 
         keras_model = dense_embedding_quantized(n_features=n_features_pf,
                                                 activation_quantizer='quantized_relu',
-                                                t_mode=t_mode,
                                                 with_bias=False,
-
                                                 logit_quantizer='quantized_bits',
                                                 logit_total_bits=logit_total_bits,
                                                 logit_int_bits=logit_int_bits,
@@ -253,15 +252,10 @@ def train_loadAllData(args):
                                                 use_stochastic_rounding=False,
                                                 units=units)
 
-    # Check which model will be used (0 for L1MET Model, 1 for DeepMET Model)
-    if t_mode == 0:
-        keras_model.compile(optimizer='adam', loss=custom_loss, metrics=['mean_absolute_error', 'mean_squared_error'])
-        verbose = 1
-    elif t_mode == 1:
-        optimizer = optimizers.Adam(lr=1., clipnorm=1.)
-        keras_model.compile(loss=custom_loss, optimizer=optimizer,
-                            metrics=['mean_absolute_error', 'mean_squared_error', custom_loss_MSE, custom_loss_dev])
-        verbose = 1
+    optimizer = optimizers.Adam(lr=1., clipnorm=1.)
+    keras_model.compile(loss=custom_loss, optimizer=optimizer,
+                        metrics=['mean_absolute_error', 'mean_squared_error', custom_loss_MSE, custom_loss_phi])
+    verbose = 1
 
     # Run training
     print(keras_model.summary())
@@ -277,10 +271,10 @@ def train_loadAllData(args):
 
     end_time = time.time()  # check end time
 
-    keras_model.load_weights(path_out+"model.h5")
+    #keras_model.load_weights(path_out+"model.h5")
     predict_test = keras_model.predict(Xr_test) * normFac
     #PUPPI_pt = normFac * np.sum(Xr_test[1], axis=1)
-    PUPPI_pt = normFac * Xr_test[1] 
+    PUPPI_pt = normFac * pxpy_test 
     Yr_test = normFac * Yr_test
 
     test(Yr_test, predict_test, PUPPI_pt, path_out)

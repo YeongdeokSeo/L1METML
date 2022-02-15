@@ -1,36 +1,42 @@
 def custom_loss_MSE(y_true, y_pred):
     '''
-    cutmoized loss function to improve the recoil response,
-    by balancing the response above one and below one
+    MSE which is only care about MET pT value (not phi)
     '''
     import tensorflow.keras.backend as K
     import tensorflow as tf
 
-    px_truth = K.flatten(y_true[:, 0])
-    py_truth = K.flatten(y_true[:, 1])
-    px_pred = K.flatten(y_pred[:, 0])
-    py_pred = K.flatten(y_pred[:, 1])
-
-    pt_truth = K.sqrt(tf.maximum(px_truth*px_truth + py_truth*py_truth, 1e-9))
-
-    #px_truth1 = px_truth / pt_truth
-    #py_truth1 = py_truth / pt_truth
-
-    # using absolute response
+    pt_truth = K.flatten(y_true[:, 0])
+    pt_pred = K.flatten(y_pred[:, 0])
 
     filter_bin_low = pt_truth > 50.
 
     # exclude low-MET region events
-    px_pred = tf.boolean_mask(px_pred, filter_bin_low)
-    py_pred = tf.boolean_mask(py_pred, filter_bin_low)
-    px_truth = tf.boolean_mask(px_truth, filter_bin_low)
-    py_truth = tf.boolean_mask(py_truth, filter_bin_low)
     pt_truth = tf.boolean_mask(pt_truth, filter_bin_low)
+    pt_pred = tf.boolean_mask(pt_pred, filter_bin_low)
 
-    loss = K.mean(((px_pred - px_truth)**2 + (py_pred - py_truth)**2))
-    #loss = K.mean((K.sqrt(tf.maximum((px_pred - px_truth)**2 + (py_pred - py_truth)**2, 1e-9))/pt_truth))
+    loss = K.mean((pt_truth - pt_pred)**2)
 
     return loss
+
+
+def custom_loss_phi(y_true, y_pred):
+    '''
+    MSE which is only care about MET phi value (not pT)
+    '''
+    import tensorflow.keras.backend as K
+    import tensorflow as tf
+    import math
+
+    phi_truth = K.flatten(y_true[:, 1])
+    phi_pred = K.flatten(y_pred[:, 1])
+
+    dPhi = phi_truth- phi_pred
+    dPhi = tf.where(dPhi > math.pi, dPhi - 2*math.pi, dPhi)
+    dPhi = tf.where(dPhi < -math.pi, dPhi + 2*math.pi, dPhi)
+
+    loss = K.mean(dPhi**2)
+
+    return 5000 * loss
 
 
 def custom_loss_dev(y_true, y_pred):
@@ -98,6 +104,7 @@ def custom_loss(y_true, y_pred):
     import tensorflow as tf
 
     MSE = custom_loss_MSE(y_true, y_pred)
+    phi = custom_loss_phi(y_true, y_pred)
     dev = custom_loss_dev(y_true, y_pred)
 
-    return MSE + dev
+    return MSE + phi 
